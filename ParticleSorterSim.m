@@ -6,11 +6,14 @@ function [] = ParticleSorterSim ()
 %[x y z]
 %set up GPU array
 
+DRAW_EACH_PARTICLE_INDIVIDUALLY = 1;
+
 %Define details of time in the simulation
 simTime=2*10^-8;%also seconds
 steps=1000;
 deltaT=simTime/steps;%seconds
 t=0;
+renderEvery = 10; % render every 10 timesteps
 %define some handy values
 c=3*10^8;
 %Details about particles mass/charge ratio in coulombs per kilogram
@@ -45,6 +48,7 @@ position=zeros(nParticles*1.1,3);
 velocity=zeros(nParticles*1.1,3);
 charge=zeros(nParticles*1.1);
 mass=zeros(nParticles*1.1);
+particleTypes = cell(1,nParticles * 1.1);
 
 while(t<simTime)
     if random('unif',0,steps)< nParticles
@@ -55,9 +59,11 @@ while(t<simTime)
         if random('unif',0,1)<protonFraction;
             charge(particleCount)=protonCharge;
             mass(particleCount)=protonMass;
+            particleTypes{particleCount} = 'proton';
         else
             charge(particleCount)=electonCharge;
             mass(particleCount)=electronMass;
+            particleTypes{particleCount} = 'electron';
         end
        
     end
@@ -75,11 +81,20 @@ while(t<simTime)
     end
     
     t=t+deltaT;
+    if mod(t, deltaT * renderEvery) < 1e-13
+        if DRAW_EACH_PARTICLE_INDIVIDUALLY
+            for i=1:particleCount
+                plot3(position(i,1), position(i,2), position(i,3),getDotType(particleTypes{i}));
+            end
+        else
+            plot3(position(:,1),position(:,2),position(:,3),'bo');
+        end
+    end
+    %particleCount
+    drawnow;
     
 end
-    plot3(position(:,1),position(:,2),position(:,3),'bo');
-    particleCount;
-    drawnow;
+
 end 
 
 function [isInside] = inside(point,boundingArea)
@@ -103,5 +118,15 @@ function [] = drawBField(bArea,bMagnitude)
                 quiver3(x,y,z,bMagnitude(1),bMagnitude(2),bMagnitude(3),'black');
             end
         end
+    end
+end
+
+function [dotType] = getDotType(particleType)
+    dotType = 'bo';
+    switch particleType
+        case 'proton'
+            dotType = 'ro';
+        case 'electron'
+            dotType = 'bo';
     end
 end
