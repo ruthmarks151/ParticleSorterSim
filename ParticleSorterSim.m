@@ -31,11 +31,11 @@ pionNeutralMass = 2.406176e-28;
 
 %Define All the B-Fields the areas are defined by two oppisite points
 %The areas are in meters the field intensities are in Teslas
-bAMagnitude=[0,0,1];
-bAArea=[1,-0.17,-0.5;1.54,0.17,.5;];
+bAMagnitude=[0,0,400E-3];
+bAArea=[1,-2,-2;1.54,2,2;];
 
-bBMagnitude=[0,0,-1];
-bBArea=[3,-0.5,-0.5;3.54,-0.2,.5;];
+bBMagnitude=[0,0,-400E-3];
+bBArea=[3,-2,-2;3.54,2,2;];
 
 %particle source prefs
 nParticles=100;
@@ -43,8 +43,13 @@ possibleParticles = {'proton','electron','pionPositive','pionNegative','pionNeut
 possibleParticlesWeights = [1,0,1,1,1];
 velocitySpray=0.02*c;
 %plot the b fields
+figure;
 hold on;
 axis equal;
+title('All Positions in Experiment');
+xlabel('X Axis in m');
+ylabel('Y Axis in m');
+zlabel('Z Axis in m');
 drawBField(bAArea,bAMagnitude);
 drawBField(bBArea,bBMagnitude);
     
@@ -112,6 +117,18 @@ while(t<simTime)
     drawnow;
     iterationNo = iterationNo + 1;
 end
+figure;
+hold on;
+axis equal;
+title('Final Positions of Particles')
+xlabel('X Axis in m');
+ylabel('Y Axis in m');
+zlabel('Z Axis in m');
+drawBField(bAArea,bAMagnitude);
+drawBField(bBArea,bBMagnitude);
+for i=1:particleCount
+    plot3(position(i,1), position(i,2), position(i,3),getDotType(particleTypes{i}));
+end    
 
 end 
 
@@ -128,7 +145,7 @@ function [isInside] = inside(point,boundingArea)
 end
 
 function [] = drawBField(bArea,bMagnitude)
-    arrowsPerAxis=2;
+    arrowsPerAxis=4;
     bMagnitude=bMagnitude*0.25/norm(bMagnitude);
     for x=min(bArea(:,1)):(max(bArea(:,1))-min(bArea(:,1)))/arrowsPerAxis:max(bArea(:,1))
         for y=min(bArea(:,2)):(max(bArea(:,2))-min(bArea(:,2)))/arrowsPerAxis:max(bArea(:,2))
