@@ -23,6 +23,12 @@ electronMass=9.109*10^-31;
 protonCharge=1.602*10^-19;
 protonMass=1.672*10^-27;
 
+pionPositiveCharge = 1.602e-19;
+pionNegativeCharge = -pionPositiveCharge;
+pionChargedMass = 2.488064e-28;
+pionNeutralCharge = 0;
+pionNeutralMass = 2.406176e-28;
+
 %Define All the B-Fields the areas are defined by two oppisite points
 %The areas are in meters the field intensities are in Teslas
 bAMagnitude=[0,0,1*10^-3];
@@ -33,7 +39,8 @@ bBArea=[3,-0.5,-0.5;3.54,-0.2,.5;];
 
 %particle source prefs
 nParticles=100;
-protonFraction=1/2;
+possibleParticles = {'proton','electron','pionPositive','pionNegative','pionNeutral'};
+possibleParticlesWeights = [1,1,1,1,1];
 velocitySpray=0.02*c;
 %plot the b fields
 hold on;
@@ -56,14 +63,24 @@ while(t<simTime)
         particleCount=particleCount+1;
         position(particleCount,:)=[0,0,0];
         velocity(particleCount,:)=[.96*c,random('unif',0,velocitySpray),random('unif',0,velocitySpray)];
-        if random('unif',0,1)<protonFraction;
-            charge(particleCount)=protonCharge;
-            mass(particleCount)=protonMass;
-            particleTypes{particleCount} = 'proton';
-        else
-            charge(particleCount)=electonCharge;
-            mass(particleCount)=electronMass;
-            particleTypes{particleCount} = 'electron';
+        pType = datasample(possibleParticles,1, 'Weights', possibleParticlesWeights);
+        particleTypes{particleCount} = pType{1};
+        switch particleTypes{particleCount}
+            case 'proton'
+                charge(particleCount) = protonCharge;
+                mass(particleCount) = protonMass;
+            case 'electron'
+                charge(particleCount) = electonCharge;
+                mass(particleCount) = electronMass;
+            case 'pionPositive'
+                charge(particleCount) = pionPositiveCharge;
+                mass(particleCount) = pionChargedMass;
+            case 'pionNegative'
+                charge(particleCount) = pionNegativeCharge;
+                mass(particleCount) = pionChargedMass;
+            case 'pionNeutral'
+                charge(particleCount) = pionNeutralCharge;
+                mass(particleCount) = pionNeutralMass;
         end
        
     end
@@ -122,11 +139,17 @@ function [] = drawBField(bArea,bMagnitude)
 end
 
 function [dotType] = getDotType(particleType)
-    dotType = 'bo';
+    dotType = 'blacko';
     switch particleType
         case 'proton'
             dotType = 'ro';
         case 'electron'
             dotType = 'bo';
+        case 'pionPositive'
+            dotType = 'r*';
+        case 'pionNegative'
+            dotType = 'b*';
+        case 'pionNeutral'
+            dotType = 'black*';
     end
 end
