@@ -10,12 +10,13 @@ DRAW_EACH_PARTICLE_INDIVIDUALLY = 1;
 LIVE_GRAPHICS = 0;
 %Define details of time in the simulation
 simTime=2*10^-8;%also seconds
-steps=4000;
+steps=1000;
 drawEvery = 10;
 deltaT=simTime/steps;%seconds
 t=0;
 %define some handy values
 c=3*10^8;
+epsilon0=8.854E-12
 %Details about particles mass/charge ratio in coulombs per kilogram
 electonCharge=-1.602*10^-19;
 electronMass=9.109*10^-31;
@@ -58,6 +59,7 @@ end
 %Set up empty vectors
 particleCount=0;
 position=zeros(floor(nParticles*1.1),3);
+newPosition=zeros(floor(nParticles*1.1),3);
 velocity=zeros(floor(nParticles*1.1),3);
 charge=zeros(floor(nParticles*1.1));
 mass=zeros(floor(nParticles*1.1));
@@ -92,7 +94,7 @@ while(t<simTime)
        
     end
     
-    for id=1:particleCount
+    parfor id=1:particleCount
         if inside(position(id,:),bAArea)
             a=charge(id)/mass(id)*cross(velocity(id,:),bAMagnitude);
         elseif inside(position(id,:),bBArea)
@@ -100,10 +102,17 @@ while(t<simTime)
         else
             a = [0,0,0];
         end
-        position(id,:)=position(id,:)+velocity(id,:)*deltaT+(1/2)*a*deltaT*deltaT;
+        for pair=1:particleCount
+            radius=(position(pair)-position(id));
+            if norm(radius)~=0
+                a=a+(1/(4*pi*epsilon0))*charge(id)*charge(pair)*radius/(mass(id)*norm(radius)^3);
+            end
+        end
+        
+        newPosition(id,:)=position(id,:)+velocity(id,:)*deltaT+(1/2)*a*deltaT*deltaT;
         velocity(id,:)=velocity(id,:)+a*deltaT;
     end
-    
+        position=newPosition;
     t=t+deltaT;
     if (mod(iterationNo, drawEvery) == 0)&& LIVE_GRAPHICS
         if DRAW_EACH_PARTICLE_INDIVIDUALLY
@@ -113,10 +122,10 @@ while(t<simTime)
         else
             plot3(position(:,1),position(:,2),position(:,3),'bo');
         end
+        drawnow;
     end
     percentageComplete=floor(100*(iterationNo/steps))
     %particleCount
-    drawnow;
     iterationNo = iterationNo + 1;
 end
 figure;
