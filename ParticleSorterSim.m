@@ -31,21 +31,21 @@ bBArea=[3,-0.5,-0.5;3.54,-0.2,.5;];
 %particle source prefs
 nParticles=100;
 protonFraction=1/2;
-velocitySpray=0.0*c;
+velocitySpray=0.02*c;
 %plot the b fields
 hold on;
 axis equal;
 drawBField(bAArea,bAMagnitude);
 drawBField(bBArea,bBMagnitude);
+    
 
-
-
+%Set up empty vectors
 particleCount=0;
+position=zeros(nParticles*1.1,3);
+velocity=zeros(nParticles*1.1,3);
+charge=zeros(nParticles*1.1);
+mass=zeros(nParticles*1.1);
 
-position=zeros(nParticles,3);
-velocity=zeros(nParticles,3);
-charge=zeros(nParticles);
-mass=zeros(nParticles);
 while(t<simTime)
     if random('unif',0,steps)< nParticles
         %initialize particles
@@ -78,7 +78,7 @@ while(t<simTime)
     
 end
     plot3(position(:,1),position(:,2),position(:,3),'bo');
-    particleCount
+    particleCount;
     drawnow;
 end 
 
