@@ -7,10 +7,10 @@ function [] = ParticleSorterSim ()
 %set up GPU array
 
 DRAW_EACH_PARTICLE_INDIVIDUALLY = 1;
-
+LIVE_GRAPHICS = 0;
 %Define details of time in the simulation
 simTime=2*10^-8;%also seconds
-steps=1000;
+steps=4000;
 drawEvery = 10;
 deltaT=simTime/steps;%seconds
 t=0;
@@ -43,24 +43,25 @@ possibleParticles = {'proton','electron','pionPositive','pionNegative','pionNeut
 possibleParticlesWeights = [1,0,1,1,1];
 velocitySpray=0.02*c;
 %plot the b fields
-figure;
-hold on;
-axis equal;
-title('All Positions in Experiment');
-xlabel('X Axis in m');
-ylabel('Y Axis in m');
-zlabel('Z Axis in m');
-drawBField(bAArea,bAMagnitude);
-drawBField(bBArea,bBMagnitude);
-    
+if LIVE_GRAPHICS
+    figure;
+    hold on;
+    axis equal;
+    title('All Positions in Experiment');
+    xlabel('X Axis in m');
+    ylabel('Y Axis in m');
+    zlabel('Z Axis in m');
+    drawBField(bAArea,bAMagnitude);
+    drawBField(bBArea,bBMagnitude);
+end
 
 %Set up empty vectors
 particleCount=0;
-position=zeros(nParticles*1.1,3);
-velocity=zeros(nParticles*1.1,3);
-charge=zeros(nParticles*1.1);
-mass=zeros(nParticles*1.1);
-particleTypes = cell(1,nParticles * 1.1);
+position=zeros(floor(nParticles*1.1),3);
+velocity=zeros(floor(nParticles*1.1),3);
+charge=zeros(floor(nParticles*1.1));
+mass=zeros(floor(nParticles*1.1));
+particleTypes = cell(1,floor(nParticles * 1.1));
 
 iterationNo = 0;
 while(t<simTime)
@@ -91,7 +92,7 @@ while(t<simTime)
        
     end
     
-    parfor id=1:particleCount
+    for id=1:particleCount
         if inside(position(id,:),bAArea)
             a=charge(id)/mass(id)*cross(velocity(id,:),bAMagnitude);
         elseif inside(position(id,:),bBArea)
@@ -104,7 +105,7 @@ while(t<simTime)
     end
     
     t=t+deltaT;
-    if (mod(iterationNo, drawEvery) == 0)
+    if (mod(iterationNo, drawEvery) == 0)&& LIVE_GRAPHICS
         if DRAW_EACH_PARTICLE_INDIVIDUALLY
             for i=1:particleCount
                 plot3(position(i,1), position(i,2), position(i,3),getDotType(particleTypes{i}));
@@ -113,6 +114,7 @@ while(t<simTime)
             plot3(position(:,1),position(:,2),position(:,3),'bo');
         end
     end
+    percentageComplete=floor(100*(iterationNo/steps))
     %particleCount
     drawnow;
     iterationNo = iterationNo + 1;
