@@ -11,9 +11,9 @@ DRAW_EACH_PARTICLE_INDIVIDUALLY = 1;
 %Define details of time in the simulation
 simTime=2*10^-8;%also seconds
 steps=1000;
+drawEvery = 10;
 deltaT=simTime/steps;%seconds
 t=0;
-renderEvery = 10; % render every 10 timesteps
 %define some handy values
 c=3*10^8;
 %Details about particles mass/charge ratio in coulombs per kilogram
@@ -31,7 +31,7 @@ pionNeutralMass = 2.406176e-28;
 
 %Define All the B-Fields the areas are defined by two oppisite points
 %The areas are in meters the field intensities are in Teslas
-bAMagnitude=[0,0,1*10^-3];
+bAMagnitude=[0,0,1];
 bAArea=[1,-0.17,-0.5;1.54,0.17,.5;];
 
 bBMagnitude=[0,0,-1];
@@ -40,7 +40,7 @@ bBArea=[3,-0.5,-0.5;3.54,-0.2,.5;];
 %particle source prefs
 nParticles=100;
 possibleParticles = {'proton','electron','pionPositive','pionNegative','pionNeutral'};
-possibleParticlesWeights = [1,1,1,1,1];
+possibleParticlesWeights = [1,0,1,1,1];
 velocitySpray=0.02*c;
 %plot the b fields
 hold on;
@@ -57,6 +57,7 @@ charge=zeros(nParticles*1.1);
 mass=zeros(nParticles*1.1);
 particleTypes = cell(1,nParticles * 1.1);
 
+iterationNo = 0;
 while(t<simTime)
     if random('unif',0,steps)< nParticles
         %initialize particles
@@ -98,7 +99,7 @@ while(t<simTime)
     end
     
     t=t+deltaT;
-    if mod(t, deltaT * renderEvery) < 1e-13
+    if (mod(iterationNo, drawEvery) == 0)
         if DRAW_EACH_PARTICLE_INDIVIDUALLY
             for i=1:particleCount
                 plot3(position(i,1), position(i,2), position(i,3),getDotType(particleTypes{i}));
@@ -109,7 +110,7 @@ while(t<simTime)
     end
     %particleCount
     drawnow;
-    
+    iterationNo = iterationNo + 1;
 end
 
 end 
