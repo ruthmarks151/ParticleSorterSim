@@ -114,7 +114,7 @@ while(t<simTime)
     end
         position=newPosition;
     t=t+deltaT;
-    if (mod(iterationNo, drawEvery) == 0)&& LIVE_GRAPHICS
+    if LIVE_GRAPHICS && (mod(iterationNo, drawEvery) == 0)
         if DRAW_EACH_PARTICLE_INDIVIDUALLY
             for i=1:particleCount
                 plot3(position(i,1), position(i,2), position(i,3),getDotType(particleTypes{i}));
@@ -124,7 +124,7 @@ while(t<simTime)
         end
         drawnow;
     end
-    percentageComplete=floor(100*(iterationNo/steps))
+    fprintf('\rpercentage complete: %d',floor(100*(iterationNo/steps)));
     %particleCount
     iterationNo = iterationNo + 1;
 end
