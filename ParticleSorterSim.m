@@ -8,29 +8,30 @@ function [] = ParticleSorterSim ()
 
 %Define details of time in the simulation
 simTime=2*10^-8;%also seconds
-steps=200;
+steps=1000;
 deltaT=simTime/steps;%seconds
 t=0;
 %define some handy values
 c=3*10^8;
 %Details about particles mass/charge ratio in coulombs per kilogram
 electonCharge=-1.602*10^-19;
-electronMass=9.109*10^-31
+electronMass=9.109*10^-31;
 
 protonCharge=1.602*10^-19;
 protonMass=1.672*10^-27;
 
 %Define All the B-Fields the areas are defined by two oppisite points
 %The areas are in meters the field intensities are in Teslas
-bAMagnitude=[0,0,1];
+bAMagnitude=[0,0,1*10^-3];
 bAArea=[1,-0.17,-0.5;1.54,0.17,.5;];
 
 bBMagnitude=[0,0,-1];
 bBArea=[3,-0.5,-0.5;3.54,-0.2,.5;];
 
-%
-nParticles=10;
-
+%particle source prefs
+nParticles=100;
+protonFraction=1/2;
+velocitySpray=0.0*c;
 %plot the b fields
 hold on;
 axis equal;
@@ -50,10 +51,17 @@ while(t<simTime)
         %initialize particles
         particleCount=particleCount+1;
         position(particleCount,:)=[0,0,0];
-        velocity(particleCount,:)=[.96*c,0,0];
-        charge(particleCount)=protonCharge;
-        mass(particleCount)=protonMass;
+        velocity(particleCount,:)=[.96*c,random('unif',0,velocitySpray),random('unif',0,velocitySpray)];
+        if random('unif',0,1)<protonFraction;
+            charge(particleCount)=protonCharge;
+            mass(particleCount)=protonMass;
+        else
+            charge(particleCount)=electonCharge;
+            mass(particleCount)=electronMass;
+        end
+       
     end
+    
     parfor id=1:particleCount
         if inside(position(id,:),bAArea)
             a=charge(id)/mass(id)*cross(velocity(id,:),bAMagnitude);
@@ -65,11 +73,13 @@ while(t<simTime)
         position(id,:)=position(id,:)+velocity(id,:)*deltaT+(1/2)*a*deltaT*deltaT;
         velocity(id,:)=velocity(id,:)+a*deltaT;
     end
+    
     t=t+deltaT;
-    plot3(position(:,1),position(:,2),position(:,3),'b*');
-    drawnow;
+    
 end
-
+    plot3(position(:,1),position(:,2),position(:,3),'bo');
+    particleCount
+    drawnow;
 end 
 
 function [isInside] = inside(point,boundingArea)
