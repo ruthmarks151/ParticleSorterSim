@@ -7,7 +7,7 @@ function [] = ParticleSorterSim ()
 %set up GPU array
 
 DRAW_EACH_PARTICLE_INDIVIDUALLY = 1;
-LIVE_GRAPHICS = 0;
+LIVE_GRAPHICS = 1;
 %Define details of time in the simulation
 simTime=2*10^-8;%also seconds
 steps=1000;
@@ -18,6 +18,7 @@ t=0;
 c=3*10^8;
 epsilon0=8.854E-12
 %Details about particles mass/charge ratio in coulombs per kilogram
+elementaryCharge = 1.602e-19;
 electonCharge=-1.602*10^-19;
 electronMass=9.109*10^-31;
 
@@ -103,7 +104,9 @@ while(t<simTime)
             a = [0,0,0];
         end
         for pair=1:particleCount
-            radius=(position(pair)-position(id));
+            radius=position(id,:)-position(pair,:);
+            %accel_q = charge(id)*charge(pair)*radius/(norm(radius)^3)./elementaryCharge^2;
+            %fprintf('rad %f,%f,%f, accel %f,%f,%f, charge %f, %f\n', radius(1), radius(2), radius(3), accel_q(1), accel_q(2), accel_q(3), charge(id) / elementaryCharge, charge(pair)/ elementaryCharge);
             if norm(radius)~=0
                 a=a+(1/(4*pi*epsilon0))*charge(id)*charge(pair)*radius/(mass(id)*norm(radius)^3);
             end
