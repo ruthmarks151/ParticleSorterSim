@@ -1,13 +1,12 @@
-function [] = ParticleSorterSim ()
+function [paneLogs] = ParticleSorterSim ()
 %      y
 %      |
 %      Z--x
 %     /
 %[x y z]
-%set up GPU array
 
 DRAW_EACH_PARTICLE_INDIVIDUALLY = 1;
-LIVE_GRAPHICS = 1;
+LIVE_GRAPHICS = 0;
 %Define details of time in the simulation
 simTime=2*10^-8;%also seconds
 steps=1000;
@@ -16,7 +15,7 @@ deltaT=simTime/steps;%seconds
 t=0;
 %define some handy values
 c=3*10^8;
-epsilon0=8.854E-12
+epsilon0=8.854E-12;
 %Details about particles mass/charge ratio in coulombs per kilogram
 elementaryCharge = 1.602e-19;
 electonCharge=-1.602*10^-19;
@@ -39,11 +38,21 @@ bAArea=[1,-2,-2;1.54,2,2;];
 bBMagnitude=[0,0,-400E-3];
 bBArea=[3,-2,-2;3.54,2,2;];
 
-%particle source prefs
-nParticles=100;
+%Six Plane Pixel Telescope Setup
+%The panels are arranged along the X axis
+%resolution ( sigma < 3:0 microm) and a readout rate of 10 kHz.
+panelSpacing=0.05;%meters
+sampleRate=10000;%hertz
+sensorSize=[300E-6,14E-3,14E-3];%meters per side
+pixelSize=[300E-6,30E-6,55E-6];%pixel size
+sensorPlacement=[3.75,-1.085,0]-0.5*sensorSize;
+sensingArea=[sensorPlacement;sensorPlacement+sensorSize+[5*panelSpacing,0,0]];
+
+%Particle source settings
+numParticles=100;
 possibleParticles = {'proton','electron','pionPositive','pionNegative','pionNeutral'};
-possibleParticlesWeights = [1,0,1,1,1];
-velocitySpray=0.02*c;
+possibleParticlesWeights = [0,0,1,0,0];
+velocitySpray=0.001*c;
 %plot the b fields
 if LIVE_GRAPHICS
     figure;
@@ -59,16 +68,16 @@ end
 
 %Set up empty vectors
 particleCount=0;
-position=zeros(floor(nParticles*1.1),3);
-newPosition=zeros(floor(nParticles*1.1),3);
-velocity=zeros(floor(nParticles*1.1),3);
-charge=zeros(floor(nParticles*1.1));
-mass=zeros(floor(nParticles*1.1));
-particleTypes = cell(1,floor(nParticles * 1.1));
-
+position=zeros(floor(numParticles*1.1),3);
+newPosition=zeros(floor(numParticles*1.1),3);
+velocity=zeros(floor(numParticles*1.1),3);
+charge=zeros(floor(numParticles*1.1));
+mass=zeros(floor(numParticles*1.1));
+particleTypes = cell(1,floor(numParticles * 1.1));
+paneLogs=[0,0,0,0];
 iterationNo = 0;
 while(t<simTime)
-    if random('unif',0,steps)< nParticles
+    if random('unif',0,steps)< numParticles
         %initialize particles
         particleCount=particleCount+1;
         position(particleCount,:)=[0,0,0];
@@ -92,7 +101,7 @@ while(t<simTime)
                 charge(particleCount) = pionNeutralCharge;
                 mass(particleCount) = pionNeutralMass;
         end
-       
+        
     end
     
     parfor id=1:particleCount
@@ -103,6 +112,7 @@ while(t<simTime)
         else
             a = [0,0,0];
         end
+        
         for pair=1:particleCount
             radius=position(id,:)-position(pair,:);
             %accel_q = charge(id)*charge(pair)*radius/(norm(radius)^3)./elementaryCharge^2;
@@ -113,9 +123,20 @@ while(t<simTime)
         end
         
         newPosition(id,:)=position(id,:)+velocity(id,:)*deltaT+(1/2)*a*deltaT*deltaT;
-        velocity(id,:)=velocity(id,:)+a*deltaT;
+        velocity(id,:)= velocity(id,:)+a*deltaT;
+        
+        if inside(newPosition(id,:),sensingArea)
+            for panel=0:6
+                panelArea=[sensorPlacement+[(panel)*panelSpacing,0,0];sensorPlacement+sensorSize+[(panel+1)*panelSpacing,0,0]];
+                    if inside(newPosition(id,:),panelArea)
+                    relPos=newPosition(id,:)-(sensorPlacement+[(panel)*panelSpacing,0,0]);
+                    paneLogs=[paneLogs;[iterationNo,panel+1,floor(relPos(2)/pixelSize(2)),floor(relPos(3)/pixelSize(3))]];%time-pane-y-z
+                    end
+            end
+        end
     end
-        position=newPosition;
+    
+    position=newPosition;
     t=t+deltaT;
     if LIVE_GRAPHICS && (mod(iterationNo, drawEvery) == 0)
         if DRAW_EACH_PARTICLE_INDIVIDUALLY
@@ -131,6 +152,7 @@ while(t<simTime)
     %particleCount
     iterationNo = iterationNo + 1;
 end
+
 figure;
 hold on;
 axis equal;
@@ -142,46 +164,71 @@ drawBField(bAArea,bAMagnitude);
 drawBField(bBArea,bBMagnitude);
 for i=1:particleCount
     plot3(position(i,1), position(i,2), position(i,3),getDotType(particleTypes{i}));
-end    
+end
 
-end 
+figure;
+row=1;
+% {
+scales=[0,max(paneLogs(:,2)),0,max(paneLogs(:,3)),0,max(paneLogs(:,4))];
+while row<length(paneLogs)
+    step=paneLogs(row,1);
+    clf;
+    title('Six Plane Telescope Data')
+    xlabel('Pane')
+    ylabel('Y Pixel');
+    zlabel('Z Pixel');
+    plot3(paneLogs(row,2),paneLogs(row,3),paneLogs(row,4),'bo');
+    row=row+1;
+    hold on;
+    axis(scales);
+    view(45,45);
+    grid on;
+    while paneLogs(row,1)==step
+        plot3(paneLogs(row,2),paneLogs(row,3),paneLogs(row,4),'bo');
+        row=row+1;
+    end
+    waitforbuttonpress;
+end
+%}  
+    
+end
 
 function [isInside] = inside(point,boundingArea)
-    isInside=true;
-    for i=1:3
-        if point(i)>boundingArea(1,i)&&point(i)>boundingArea(2,i)
-            isInside=false;
-        end   
-        if point(i)<boundingArea(1,i)&&point(i)<boundingArea(2,i)
-            isInside=false;
-        end  
+isInside=true;
+for i=1:3
+    if point(i)>boundingArea(1,i)&&point(i)>boundingArea(2,i)
+        isInside=false;
     end
+    if point(i)<boundingArea(1,i)&&point(i)<boundingArea(2,i)
+        isInside=false;
+    end
+end
 end
 
 function [] = drawBField(bArea,bMagnitude)
-    arrowsPerAxis=4;
-    bMagnitude=bMagnitude*0.25/norm(bMagnitude);
-    for x=min(bArea(:,1)):(max(bArea(:,1))-min(bArea(:,1)))/arrowsPerAxis:max(bArea(:,1))
-        for y=min(bArea(:,2)):(max(bArea(:,2))-min(bArea(:,2)))/arrowsPerAxis:max(bArea(:,2))
-            for z=min(bArea(:,3)):(max(bArea(:,3))-min(bArea(:,3)))/arrowsPerAxis:max(bArea(:,3))
-                quiver3(x,y,z,bMagnitude(1),bMagnitude(2),bMagnitude(3),'black');
-            end
+arrowsPerAxis=4;
+bMagnitude=bMagnitude*0.25/norm(bMagnitude);
+for x=min(bArea(:,1)):(max(bArea(:,1))-min(bArea(:,1)))/arrowsPerAxis:max(bArea(:,1))
+    for y=min(bArea(:,2)):(max(bArea(:,2))-min(bArea(:,2)))/arrowsPerAxis:max(bArea(:,2))
+        for z=min(bArea(:,3)):(max(bArea(:,3))-min(bArea(:,3)))/arrowsPerAxis:max(bArea(:,3))
+            quiver3(x,y,z,bMagnitude(1),bMagnitude(2),bMagnitude(3),'black');
         end
     end
 end
+end
 
 function [dotType] = getDotType(particleType)
-    dotType = 'blacko';
-    switch particleType
-        case 'proton'
-            dotType = 'ro';
-        case 'electron'
-            dotType = 'bo';
-        case 'pionPositive'
-            dotType = 'r*';
-        case 'pionNegative'
-            dotType = 'b*';
-        case 'pionNeutral'
-            dotType = 'black*';
-    end
+dotType = 'blacko';
+switch particleType
+    case 'proton'
+        dotType = 'ro';
+    case 'electron'
+        dotType = 'bo';
+    case 'pionPositive'
+        dotType = 'r*';
+    case 'pionNegative'
+        dotType = 'b*';
+    case 'pionNeutral'
+        dotType = 'black*';
+end
 end
