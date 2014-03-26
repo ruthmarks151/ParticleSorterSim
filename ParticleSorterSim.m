@@ -56,9 +56,12 @@ sensingArea=[sensorPlacement;sensorPlacement+sensorSize+[5*panelSpacing,0,0]];
 
 %Particle source settings
 numParticles=100;
-possibleParticles = {'proton','electron','pionPositive','pionNegative','pionNeutral',...
+possibleParticles = {'proton','electron',...
+                     'pionPositive','pionNegative','pionNeutral',...
                      'positron','antiproton'};
-possibleParticlesWeights = [1,1,1,1,1,1,1];
+possibleParticlesWeights = [1,0,...
+                            1,1,1,...
+                            0,1];
 velocitySpray=0.001*c;
 %plot the b fields
 if LIVE_GRAPHICS
@@ -219,8 +222,8 @@ end
 end
 
 function [] = drawBField(bArea,bMagnitude)
-arrowsPerAxis=4;
-bMagnitude=bMagnitude*0.25/norm(bMagnitude);
+arrowsPerAxis=2;
+bMagnitude=bMagnitude*1/norm(bMagnitude);
 for x=min(bArea(:,1)):(max(bArea(:,1))-min(bArea(:,1)))/arrowsPerAxis:max(bArea(:,1))
     for y=min(bArea(:,2)):(max(bArea(:,2))-min(bArea(:,2)))/arrowsPerAxis:max(bArea(:,2))
         for z=min(bArea(:,3)):(max(bArea(:,3))-min(bArea(:,3)))/arrowsPerAxis:max(bArea(:,3))
