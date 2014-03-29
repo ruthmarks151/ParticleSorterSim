@@ -83,7 +83,18 @@ Here, since the charges are moving at approximately the same velocity, magnetic 
 %% someone should taken a good look at this and fix the wrong parts
 %% cough andrew cough
 
-We can make a few predictions about the measurements we'd expect from these experiments. From a stationary reference frame, a stream of charged particles resembles a current from a wire, so a B-field according to the Biot-Savart law should be expected.
+We can make a few predictions about the measurements we'd expect from these experiments. From a stationary reference frame, a stream of charged particles resembles a current from a wire, so a B-field according to the Biot-Savart law should be expected. Thus, we predict a B-field according to
+\[
+	d\vec{B} = \frac{\mu_0}{4\pi}\frac{id\vec{s} \times \hat{r}}{r^2}
+\]
+where
+\begin{description}
+	\item $d\vec{B}$ is the differential B-field
+	\item $\mu_0$ is the permeability constant
+	\item $id\vec{s}$ is the differential current-length element
+	\item $\hat{r}$ is the normalized vector from the differential current-length element to the point in space
+	\item $r$ is the distance from the differential current-length element to the point in space
+\end{description}
 
 Similarly, since the drift speed of charges in current-carrying wires is so low, the forces between a current on a wire and a line of charged particles would also likely resemble those predicted by the Biot-Savart law.
 
