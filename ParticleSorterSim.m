@@ -6,7 +6,7 @@ function [paneLogs] = ParticleSorterSim ()
 %[x y z]
 
 DRAW_EACH_PARTICLE_INDIVIDUALLY = 1;
-LIVE_GRAPHICS = 0;
+LIVE_GRAPHICS = 1;
 %Define details of time in the simulation
 simTime=2*10^-8;%also seconds
 steps=1000;
@@ -23,6 +23,12 @@ electronMass=9.109*10^-31;
 
 protonCharge=1.602*10^-19;
 protonMass=1.672*10^-27;
+
+positronCharge=1.602*10^-19;
+positronMass=9.109*10^-31;
+
+antiprotonCharge=-1.602*10^-19;
+antiprotonMass=1.672*10^-27;
 
 pionPositiveCharge = 1.602e-19;
 pionNegativeCharge = -pionPositiveCharge;
@@ -50,8 +56,12 @@ sensingArea=[sensorPlacement;sensorPlacement+sensorSize+[5*panelSpacing,0,0]];
 
 %Particle source settings
 numParticles=100;
-possibleParticles = {'proton','electron','pionPositive','pionNegative','pionNeutral'};
-possibleParticlesWeights = [0,0,1,0,0];
+possibleParticles = {'proton','electron',...
+                     'pionPositive','pionNegative','pionNeutral',...
+                     'positron','antiproton'};
+possibleParticlesWeights = [1,0,...
+                            1,1,1,...
+                            0,1];
 velocitySpray=0.001*c;
 %plot the b fields
 if LIVE_GRAPHICS
@@ -100,6 +110,12 @@ while(t<simTime)
             case 'pionNeutral'
                 charge(particleCount) = pionNeutralCharge;
                 mass(particleCount) = pionNeutralMass;
+            case 'antiproton'
+                charge(particleCount) = antiprotonCharge;
+                mass(particleCount) = antiprotonMass;
+            case 'positron'
+                charge(particleCount) = positronCharge;
+                mass(particleCount) = positronMass;
         end
         
     end
@@ -206,8 +222,8 @@ end
 end
 
 function [] = drawBField(bArea,bMagnitude)
-arrowsPerAxis=4;
-bMagnitude=bMagnitude*0.25/norm(bMagnitude);
+arrowsPerAxis=2;
+bMagnitude=bMagnitude*1/norm(bMagnitude);
 for x=min(bArea(:,1)):(max(bArea(:,1))-min(bArea(:,1)))/arrowsPerAxis:max(bArea(:,1))
     for y=min(bArea(:,2)):(max(bArea(:,2))-min(bArea(:,2)))/arrowsPerAxis:max(bArea(:,2))
         for z=min(bArea(:,3)):(max(bArea(:,3))-min(bArea(:,3)))/arrowsPerAxis:max(bArea(:,3))
@@ -221,7 +237,7 @@ function [dotType] = getDotType(particleType)
 dotType = 'blacko';
 switch particleType
     case 'proton'
-        dotType = 'ro';
+        dotType = 'r+';
     case 'electron'
         dotType = 'bo';
     case 'pionPositive'
@@ -229,6 +245,10 @@ switch particleType
     case 'pionNegative'
         dotType = 'b*';
     case 'pionNeutral'
-        dotType = 'black*';
+        dotType = 'k*';
+    case 'antiproton'
+        dotType = 'g+';
+    case 'positron'
+        dotType = 'ro';
 end
 end
